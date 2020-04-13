@@ -32,3 +32,33 @@ public ResponseVO queryOperationActivityInfoList(@RequestBody OperationActivityI
 ```java
 log.error("分页条件查询运营-活动管理异常！ex={}", e.getMessage(), e);
 ```
+
+**springboot缓存 @Catchable与@CatchEvict**
+```java
+    @Override
+    @CacheEvict(value = "operationSponsoredConfig",key = "#param")
+    public int updateStatusById(SponsoredConfigUpdateStatusDto param) throws ServiceException {
+        return operationSponsoredConfigMapper.updateStatusById(param);
+    }
+
+    /**
+     * @Description 分页查询赞助配置对象
+     * @Author:jing
+     */
+    @Override
+    @Cacheable(value = "operationSponsoredConfig", key = "#param", cacheManager = "cacheManager")
+    public PageInfo queryOperationSponsoredConfigList(SponsoredConfigPageDto param) throws ServiceException {
+        PageHelper.startPage(param.getPageNum(), param.getPageSize());
+        List<OperationSponsoredConfig> operationSponsoredConfigs = operationSponsoredConfigMapper.queryOperationSponsoredConfigList(param);
+        OssPathUtil.convertPath(operationSponsoredConfigs, SHARE_URL, SPONSORED_ICON_URL, SPONSORED_URL);
+        return new PageInfo(operationSponsoredConfigs);
+    }
+
+    @Override
+    @CacheEvict(value = "operationSponsoredConfig",key = "#param")
+    public void updateSponsoredByTime(HeaderDto param) throws ServiceException {
+        operationSponsoredConfigMapper.updateSponsoredByTime();
+    }
+```
+***如果@CacheEvict在统一个实现类中引用同一个value那么该缓存将不生效，应该统一放在controller层处理***
+
